@@ -30,3 +30,7 @@ test/dummy/.sass-cache
 #
 .DS_Store
 .project
+
+# rvm
+.ruby-version
+.ruby-gemset
