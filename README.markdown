@@ -122,7 +122,7 @@ module API
   module Entities
     class Client < Grape::Entity
       expose :name, :documentation => { :type => "string", :desc => "Name" }
-      expose :addresses, using: Entities::Address, documentation: {type: 'Address', desc: 'Addresses.', param_type: 'body', is_array: true}
+      expose :addresses, using: Entities::Address, documentation: {type: 'Address', desc: 'Addresses.', is_array: true}
     end
 
     class Address < Grape::Entity
@@ -154,7 +154,7 @@ module API
   module Entities
     class Client < Grape::Entity
       expose :name, :documentation => { :type => "string", :desc => "Name" }
-      expose :address, using: Entities::Address, documentation: {type: 'Address', desc: 'Addresses.', param_type: 'body', is_array: false}
+      expose :address, using: Entities::Address, documentation: {type: 'Address', desc: 'Addresses.', is_array: false}
     end
 
     class Address < Grape::Entity

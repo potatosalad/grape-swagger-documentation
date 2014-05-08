@@ -138,12 +138,10 @@ module Grape
 
               apis = []
 
-
               ops.each do |path, routes|
                 operations = routes.map do |route|
                   notes       = as_markdown(route.route_notes)
                   http_codes  = parse_http_codes(route.route_http_codes)
-
 
                   models <<  if @@models.present?
                     @@models
@@ -153,15 +151,16 @@ module Grape
 
                   models = models.flatten.compact
 
-
                   operation = {
+                    :consumes   => [ "application/json" ],
                     :produces   => content_types_for(target_class),
                     :notes      => notes.to_s,
                     :summary    => route.route_description || '',
                     :nickname   => route.route_nickname || (route.route_method + route.route_path.gsub(/[\/:\(\)\.]/,'-')),
+                    :method     => route.route_method,
                     :httpMethod => route.route_method,
-                    :parameters => parse_header_params(route.route_headers) +
-                      parse_params(route.route_params, route.route_path, route.route_method)
+                    :parameters => parse_header_params(route.route_headers) + parse_params(route.route_params, route.route_path, route.route_method),
+                    :type       => "void"
                   }
                   operation.merge!(:type => parse_entity_name(route.route_entity)) if route.route_entity
                   operation.merge!(:responseMessages => http_codes) unless http_codes.empty?
@@ -200,7 +199,7 @@ module Grape
               params.map do |param, value|
                 value[:type] = 'file' if value.is_a?(Hash) && value[:type] == 'Rack::Multipart::UploadedFile'
                 items = {}
-                dataType      = value.is_a?(Hash) ? (value[:type] || 'String').to_s : 'String'
+                dataType      = parse_entity_name(value.is_a?(Hash) ? (value[:type] || 'String').to_s : 'String')
                 description   = value.is_a?(Hash) ? value[:desc] || value[:description] : ''
                 required      = value.is_a?(Hash) ? !!value[:required] : false
                 defaultValue  = value.is_a?(Hash) ? value[:defaultValue] : nil
@@ -213,20 +212,21 @@ module Grape
                   end
                 else
                   paramType = if path.include?(":#{param}")
-                     'path'
-                  else
-                    %w[ POST PUT PATCH ].include?(method) ? 'form' : 'query'
-                  end
+                               'path'
+                              else
+                                %w[ POST PUT PATCH ].include?(method) ? 'body' : 'query'
+                              end
                 end
                 name = (value.is_a?(Hash) && value[:full_name]) || param
 
                 parsed_params = {
-                  paramType:    paramType,
-                  name:         name,
-                  description:  as_markdown(description),
-                  type:         dataType,
-                  dataType:     dataType,
-                  required:     required
+                  paramType:     paramType,
+                  name:          name,
+                  description:   as_markdown(description),
+                  type:          dataType,
+                  dataType:      dataType,
+                  required:      required,
+                  allowMultiple: is_array
                 }
 
                 parsed_params.merge!({items: items}) if items.present?
