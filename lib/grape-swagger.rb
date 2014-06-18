@@ -220,12 +220,14 @@ module Grape
                                   "dateTime"
                                 when "Numeric"
                                   "double"
+                                when "Symbol"
+                                  "string"
                                 else
                                   parse_entity_name(raw_data_type)
                                 end
                 description   = value.is_a?(Hash) ? value[:desc] || value[:description] : ''
                 required      = value.is_a?(Hash) ? !!value[:required] : false
-                defaultValue  = value.is_a?(Hash) ? value[:defaultValue] : nil
+                defaultValue  = value.is_a?(Hash) ? (value[:defaultValue] || value[:default]) : nil
                 is_array      = value.is_a?(Hash) ? (value[:is_array] || false) : false
                 if value.is_a?(Hash) && value.key?(:param_type)
                   paramType   = value[:param_type]
@@ -248,6 +250,8 @@ module Grape
                                 end
                 end
                 name          = (value.is_a?(Hash) && value[:full_name]) || param
+                required      = true if paramType == 'path'
+                enum          = (value.is_a?(Hash) && (value[:enum] || value[:values]))
 
                 parsed_params = {
                   paramType:     paramType,
@@ -261,6 +265,7 @@ module Grape
                 parsed_params.merge!({format: "int64"}) if dataType == "long"
                 parsed_params.merge!({items: items}) if items.present?
                 parsed_params.merge!({defaultValue: defaultValue}) if defaultValue
+                parsed_params.merge!({enum: enum}) if enum
 
                 parsed_params
               end
